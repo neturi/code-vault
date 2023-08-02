@@ -6,7 +6,7 @@ A  C++ cross-platform library.
 
 For more info, see [the Vault home page](http://www.bombaydigital.com/vault/)
 
-(version 4.1)
+(version 4.2)
 
 C++ can give you the best of several worlds: close-to-the-metal performance, high-level object-oriented design, and simple deterministic object lifecycles. But historically the compiler tools, standard libraries, and platform APIs have conspired to make it challenging to create large scale code that compiles and runs right out of the box on any platform. In addition, a variety of basic necessities for programs are only provided by each OS's different low-level native procedural APIs, making cross-platform development a big undertaking.
 
@@ -75,6 +75,7 @@ Easily write unit tests to prove that your code does what is expected. The Vault
 
 ### More!
 
-A sampling of some of the other classes Vault provides: `VBento` "Bento" structured data. `VPoint`, `VRect`, `VPolygon`, `VPoint3D`, `VSize`, `VLine` Floating-point and integer-based geometry types/utilities, which convert easily with Qt types. `VColor`, `VColorPair`, `VColorPalette` Color, palette, and color mapping utilities. `VException`, `VSystemError`, `VStackTraceException` Exceptions with cross-platform system error handling and stack traces. `VHex` Hex dump generation and i/o, hexadecimal conversion.
+A sampling of some of the other classes Vault provides: `VBento` "Bento" structured data. `VPoint`, `VRect`, `VPolygon`, `VPoint3D`, `VSize`, `VLine` Floating-point and integer-based geometry types/utilities, which convert easily with Qt types. `VColor`, `VColorPair`, `VColorPalette` Color, palette, and color mapping utilities. `VException`, `VSystemError`, `VStackTraceException`, Exceptions with cross-platform system error handling and stack traces. `VHex` Hex dump generation and i/o, hexadecimal conversion.
+Also  'VEventProducer', 'VCommSessionInfo', 'VHighResolutionTimeHelper' for Event producing and capturing.
 
 It’s all about leveraging a unified, consistent API across the entire library, and letting you build upon it.
