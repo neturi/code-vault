@@ -1,0 +1,55 @@
+/*
+This is an example file. You should copy it to the appropriate location in your
+application source code, remove the .txt suffix, remove this paragraph, and
+customize the values below.
+
+vconfigure.h for Code Vault
+
+This file is where you can define the switches that control which features are enabled
+or disabled in the Vault library.
+You should have a separate copy of this header file for each application, since each
+application may have different requirements.
+I recommend that you simply comment or un-comment the values below, so that it is
+clear by reading which ones you are not using.
+*/
+
+/* This flag enables formatting VString with the vararg ctor and the format() method. */
+#define VAULT_VARARG_STRING_FORMATTING_SUPPORT
+
+/* This flag enforces strict formatting for VString using VSTRING_FORMAT and VSTRING_ARGS macros. */
+#define VAULT_VSTRING_STRICT_FORMATTING
+
+/* This flag enables the VASSERT macros in general. Define to 0 to disable. Enabled if not defined. */
+#define VAULT_ASSERTIONS_ENABLED 1
+
+/* This flag means that a failed VASSERT condition check will throw a VStackTraceException in addition to logging an error. */
+/* Define to 0 to disable. Enabled if not defined. */
+#define VAULT_ASSERTIONS_THROW 1
+
+/* This flag enables formatting VString with boost:format on several methods. */
+/* It is only available if you are using Boost. */
+#define VAULT_BOOST_STRING_FORMATTING_SUPPORT
+
+/* This flag enables converting between VString and QString. */
+/* It is only available if you are using Qt. */
+#define VAULT_QT_SUPPORT
+
+/* This flag enables use of a user-defined stack crawl handler hook in VThread and VASSERT. */
+/* It requires you to create a stack crawl header file that contains certain items (see VThread.cpp). */
+#define VAULT_USER_STACKCRAWL_SUPPORT
+
+/* This flag enables VMutex checking and logging of lock delays. */
+#define VAULT_MUTEX_LOCK_DELAY_CHECK
+
+/* This flag enables the memory allocation tracking feature, useful for finding leaks. */
+#define VAULT_MEMORY_ALLOCATION_TRACKING_SUPPORT
+
+/* This flag enables translation of Win32 structured exceptions into standard C++ exceptions. Requires /EHa compiler option. */
+#define VAULT_WIN32_STRUCTURED_EXCEPTION_TRANSLATION_SUPPORT
+
+/* This flag lets Vault define the VThread::userThreadMain() function. If you add custom stack crawl handling, you need to define it yourself. */
+#define VAULT_SIMPLE_USER_THREAD_MAIN
+
+/* This flag hints the Mac OS X specific executable location code to use bundle rather than tool path structure to determine the app directory. */
+#define VAULT_MACOSX_APP_IS_BUNDLE
+

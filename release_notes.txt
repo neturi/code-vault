@@ -1,5 +1,16 @@
 CODE VAULT RELEASE NOTES
 
+---------- VERSION 4.2 ----------
+Anil Babu Neturi, December 2021 - February 2022
+VEventProducer(Unix flavored platforms) to Produce and capture events and the supporting classes to capture the 
+session info - VCommSessionInfo
+
+Laxmana Mohan Prabhu, August 2017
+VWSAEventProducer to Produce and capture events and the supporting classes to capture the session info - VCommSessionInfo
+
+Laxmana Mohan Prabhu, August 2016
+VHighResolutionTimeHelper to obtain timer till Nano Seconds(for windows, unix and mac platforms)
+
 ---------- VERSION 4.1 ----------
 Trygve Isaacson, August 2014
 
