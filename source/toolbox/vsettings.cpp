@@ -1,8 +1,7 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
-This file is part of the Code Vault version 4.1
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
+This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 /** @file */
@@ -12,37 +11,29 @@ License: MIT. See LICENSE.md in the Vault top level directory.
 #include "vexception.h"
 #include "vmemorystream.h"
 #include "vtextiostream.h"
-#include "vbinaryiostream.h"
 #include "vchar.h"
-#include "vbento.h"
-#include "vfilewriter.h"
 
 V_STATIC_INIT_TRACE
 
 #undef strlen
 
-static VString _INDENT_STRING("    ");
-
 // VSettingsNode ------------------------------------------------------------------
 
-VSettingsNode::VSettingsNode(VSettingsTag* parent, const VString& name, bool preferCDATA)
+VSettingsNode::VSettingsNode(VSettingsTag* parent, const VString& name)
     : mParent(parent)
     , mName(name)
-    , mPreferCDATA(preferCDATA)
     {
 }
 
 VSettingsNode::VSettingsNode(const VSettingsNode& other)
     : mParent(other.mParent)
     , mName(other.mName)
-    , mPreferCDATA(other.mPreferCDATA)
     {
 }
 
 VSettingsNode& VSettingsNode::operator=(const VSettingsNode& other) {
     mParent = other.mParent;
     mName = other.mName;
-    mPreferCDATA = other.mPreferCDATA;
 
     return *this;
 }
@@ -138,7 +129,7 @@ int VSettingsNode::getInt(const VString& path, int defaultValue) const {
 int VSettingsNode::getInt(const VString& path) const {
     const VSettingsNode* nodeForPath = this->findNode(path);
 
-    if (nodeForPath != NULL)
+    if (nodeForPath != NULL) 
         return nodeForPath->getIntValue();
 
     this->throwNotFound("Integer", path);
@@ -350,46 +341,6 @@ VDuration VSettingsNode::getDuration(const VString& path) const {
     return VDuration(); // (will never reach this statement because of throw)
 }
 
-VDate VSettingsNode::getDate(const VString& path, const VDate& defaultValue) const {
-    const VSettingsNode* nodeForPath = this->findNode(path);
-
-    if (nodeForPath != NULL)
-        return nodeForPath->getDateValue();
-    else
-        return defaultValue;
-}
-
-VDate VSettingsNode::getDate(const VString& path) const {
-    const VSettingsNode* nodeForPath = this->findNode(path);
-
-    if (nodeForPath != NULL)
-        return nodeForPath->getDateValue();
-
-    this->throwNotFound("Date", path);
-
-    return VDate(); // (will never reach this statement because of throw)
-}
-
-VInstant VSettingsNode::getInstant(const VString& path, const VInstant& defaultValue) const {
-    const VSettingsNode* nodeForPath = this->findNode(path);
-
-    if (nodeForPath != NULL)
-        return nodeForPath->getInstantValue();
-    else
-        return defaultValue;
-}
-
-VInstant VSettingsNode::getInstant(const VString& path) const {
-    const VSettingsNode* nodeForPath = this->findNode(path);
-
-    if (nodeForPath != NULL)
-        return nodeForPath->getInstantValue();
-
-    this->throwNotFound("Instant", path);
-
-    return VInstant(); // (will never reach this statement because of throw)
-}
-
 bool VSettingsNode::nodeExists(const VString& path) const {
     return (this->findNode(path) != NULL);
 }
@@ -448,31 +399,6 @@ void VSettingsNode::addPolygonValue(const VString& path, const VPolygon& value) 
 void VSettingsNode::addColorValue(const VString& path, const VColor& value) {
     VString valueString(VSTRING_ARGS("#%02x%02x%02x", (Vu8)value.getRed(), (Vu8)value.getGreen(), (Vu8)value.getBlue()));
     this->addStringValue(path, valueString);
-}
-
-void VSettingsNode::addInstantValue(const VString& path, const VInstant& value, int format) {
-    VString valueString;
-    switch (format) {
-        case VSettingsCDATA::UTC_OFFSET:
-            valueString = VSTRING_S64(value.getValue());
-            break;
-        case VSettingsCDATA::UTC_STRING:
-            valueString = value.getUTCString();
-            break;
-        case VSettingsCDATA::LOCAL_STRING:
-            valueString = value.getLocalString();
-            break;
-        default:
-            valueString = VSTRING_S64(value.getValue());
-            break;
-    }
-    
-    this->addStringValue(path, valueString);
-}
-
-void VSettingsNode::addDateValue(const VString& path, const VDate& value) {
-    // Don't rely on default date formatter, which might change in the future. This format is what we parse.
-    this->addStringValue(path, value.getDateString(VInstantFormatter("y-MM-dd")));
 }
 
 void VSettingsNode::addDurationValue(const VString& path, const VDuration& value) {
@@ -588,11 +514,6 @@ void VSettingsNode::addChildNode(VSettingsNode* /*node*/) {
     throw VStackTraceException(VSTRING_FORMAT("VSettingsNode::addChildNode called for invalid object at '%s'", this->getPath().chars()));
 }
 
-VSettingsTag* VSettingsNode::addNewChildTag(VSettingsTag* node) {
-    this->addChildNode(node);
-    return node;
-}
-
 VSettingsTag* VSettingsNode::getParent() {
     return mParent;
 }
@@ -639,9 +560,12 @@ void VSettings::readFromFile(const VFSNode& file) {
 }
 
 void VSettings::writeToFile(const VFSNode& file) const {
-    VFileWriter writer(file);
-    this->writeToStream(writer.getTextOutputStream());
-    writer.save();
+    VMemoryStream buffer;
+    VTextIOStream out(buffer);
+    this->writeToStream(out);
+    buffer.seek0();
+    VBinaryIOStream binaryStream(buffer);
+    VFSNode::safelyOverwriteFile(file, buffer.getEOFOffset(), binaryStream);
 }
 
 void VSettings::readFromStream(VTextIOStream& inputStream) {
@@ -754,7 +678,10 @@ void VSettings::deleteNamedChildren(const VString& name) {
 
     for (VSizeType i = mNodes.size(); i > 0 ; --i) {
         VSettingsNode* child = mNodes[i-1];
-
+        
+        if (!CheckNULLAndLog(child))
+            continue;
+        
         if (child->getName() == name) {
             delete child;
             mNodes.erase(mNodes.begin() + i - 1);
@@ -800,14 +727,6 @@ VColor VSettings::getColorValue() const {
 
 VDuration VSettings::getDurationValue() const {
     throw VStackTraceException("Tried to get raw duration value on top level settings object.");
-}
-
-VDate VSettings::getDateValue() const {
-    throw VStackTraceException("Tried to get raw date value on top level settings object.");
-}
-
-VInstant VSettings::getInstantValue() const {
-    throw VStackTraceException("Tried to get raw instant value on top level settings object.");
 }
 
 void VSettings::addChildNode(VSettingsNode* node) {
@@ -903,7 +822,7 @@ VSettingsTag::~VSettingsTag() {
 
 void VSettingsTag::writeToStream(VTextIOStream& outputStream, int indentLevel) const {
     for (int i = 0; i < indentLevel; ++i)
-        outputStream.writeString(_INDENT_STRING);
+        outputStream.writeString(" ");
 
     VString beginTag(VSTRING_ARGS("<%s", mName.chars()));
     outputStream.writeString(beginTag);
@@ -919,12 +838,6 @@ void VSettingsTag::writeToStream(VTextIOStream& outputStream, int indentLevel) c
     if (mChildNodes.empty()) {
         // Just close the tag and we're done.
         outputStream.writeLine(" />");
-    } else if ((mChildNodes.size() == 1) && (dynamic_cast<VSettingsCDATA*>(mChildNodes[0]) != nullptr)) {
-        // The tag has only a CDATA child, so render the tag and contents on one line.
-        outputStream.writeString(">");
-        outputStream.writeString(mChildNodes[0]->getStringValue());
-        VString endTag(VSTRING_ARGS("</%s>", mName.chars()));
-        outputStream.writeLine(endTag);
     } else {
         // Close the opening tag.
         outputStream.writeLine(">");
@@ -936,7 +849,7 @@ void VSettingsTag::writeToStream(VTextIOStream& outputStream, int indentLevel) c
 
         // Write a closing tag.
         for (int i = 0; i < indentLevel; ++i) {
-            outputStream.writeString(_INDENT_STRING);
+            outputStream.writeString(" ");
         }
 
         VString endTag(VSTRING_ARGS("</%s>", mName.chars()));
@@ -1019,7 +932,10 @@ void VSettingsTag::deleteNamedChildren(const VString& name) {
 
     for (VSizeType i = mAttributes.size(); i > 0; --i) {
         VSettingsAttribute* attribute = mAttributes[i-1];
-
+		
+        if (!CheckNULLAndLog(attribute))
+			continue;
+		
         if (attribute->getName() == name) {
             delete attribute;
             mAttributes.erase(mAttributes.begin() + i - 1);
@@ -1028,6 +944,9 @@ void VSettingsTag::deleteNamedChildren(const VString& name) {
 
     for (VSizeType i = mChildNodes.size(); i > 0 ; --i) {
         VSettingsNode* child = mChildNodes[i-1];
+		
+        if (!CheckNULLAndLog(child))
+	        continue;
 
         if (child->getName() == name) {
             delete child;
@@ -1125,24 +1044,6 @@ VDuration VSettingsTag::getDurationValue() const {
     return cdataNode->getDurationValue();
 }
 
-VDate VSettingsTag::getDateValue() const {
-    VSettingsNode* cdataNode = this->_findChildTag("<cdata>");
-
-    if (cdataNode == NULL)
-        this->throwNotFound("Date", "<cdata>");
-
-    return cdataNode->getDateValue();
-}
-
-VInstant VSettingsTag::getInstantValue() const {
-    VSettingsNode* cdataNode = this->_findChildTag("<cdata>");
-
-    if (cdataNode == NULL)
-        this->throwNotFound("Instant", "<cdata>");
-
-    return cdataNode->getInstantValue();
-}
-
 void VSettingsTag::setLiteral(const VString& value) {
     VSettingsNode* cdataNode = this->_findChildTag("<cdata>");
 
@@ -1185,17 +1086,10 @@ VSettingsTag* VSettingsTag::_findChildTag(const VString& name) const {
 }
 
 void VSettingsTag::_addLeafValue(const VString& name, bool hasValue, const VString& value) {
-    if (hasValue) {
-        if (mPreferCDATA) {
-            VSettingsTag* tag = new VSettingsTag(NULL, name);
-            tag->addChildNode(new VSettingsCDATA(tag, value));
-            this->addChildNode(tag);
-        } else {
-            this->addAttribute(new VSettingsAttribute(this, name, value));
-        }
-    } else {
+    if (hasValue)
+        this->addAttribute(new VSettingsAttribute(this, name, value));
+    else
         this->addAttribute(new VSettingsAttribute(this, name));
-    }
 }
 
 void VSettingsTag::_removeAttribute(VSettingsAttribute* attribute) {
@@ -1288,32 +1182,6 @@ VDuration VSettingsAttribute::getDurationValue() const {
     return VDuration::createFromDurationString(mValue);
 }
 
-VDate VSettingsAttribute::getDateValue() const {
-    return VDate::createFromDateString(mValue, VCodePoint('-'));
-}
-
-VInstant VSettingsAttribute::getInstantValue() const {
-    VInstant when;
-    if (mValue.contains("UTC")) {
-        when.setUTCString(mValue);
-    } else {
-        bool isNumeric = true;
-        for (VString::const_iterator i = mValue.begin(); i != mValue.end(); ++i) {
-            if (! (*i).isNumeric()) {
-                isNumeric = false;
-                break;
-            }
-        }
-    
-        if (isNumeric) {
-            when = VInstant::instantFromRawValue(mValue.parseS64());
-        } else {
-            when.setLocalString(mValue);
-        }
-    }
-    return when;
-}
-
 void VSettingsAttribute::setLiteral(const VString& value) {
     mHasValue = true;
     mValue = value;
@@ -1333,7 +1201,7 @@ VSettingsCDATA::VSettingsCDATA(VSettingsTag* parent, const VString& cdata) :
 void VSettingsCDATA::writeToStream(VTextIOStream& outputStream, int indentLevel) const {
     if (indentLevel > 1) {  // at indent level 1 we're just a top-level item, indenting is detrimental
         for (int i = 0; i < indentLevel; ++i) {
-            outputStream.writeString(_INDENT_STRING);
+            outputStream.writeString(" ");
         }
     }
 
@@ -1390,20 +1258,6 @@ VDuration VSettingsCDATA::getDurationValue() const {
     return VDuration::createFromDurationString(mCDATA);
 }
 
-VDate VSettingsCDATA::getDateValue() const {
-    return VDate::createFromDateString(mCDATA, VCodePoint('-'));
-}
-
-VInstant VSettingsCDATA::getInstantValue() const {
-    VInstant when;
-    if (mCDATA.contains("UTC")) {
-        when.setUTCString(mCDATA);
-    } else {
-        when.setLocalString(mCDATA);
-    }
-    return when;
-}
-
 void VSettingsCDATA::setLiteral(const VString& value) {
     mCDATA = value;
 }
@@ -1442,6 +1296,7 @@ void VSettingsXMLParser::parse() {
 }
 
 void VSettingsXMLParser::parseLine() {
+    VChar c;
 
     mCurrentColumnNumber = 0;
 
@@ -1449,14 +1304,14 @@ void VSettingsXMLParser::parseLine() {
         return; // skip the typical "<?xml version .... ?>" first line
     }
 
-    for (VString::iterator i = mCurrentLine.begin(); i != mCurrentLine.end(); ++i) {
-        VCodePoint c = (*i);
-
+    for (int i = 0; i < mCurrentLine.length(); ++i) {
         ++mCurrentColumnNumber;
+
+        c = mCurrentLine[i];
 
         switch (mParserState) {
             case kReady:
-                if (c == '<') {
+                if (c.charValue() == '<') {
                     this->emitCDATA();
                     this->changeState(kTag1_open);
                 } else {
@@ -1465,25 +1320,25 @@ void VSettingsXMLParser::parseLine() {
                 break;
 
             case kComment1_bang:
-                if (c == '-') {
+                if (c.charValue() == '-') {
                     this->changeState(kComment2_bang_dash);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' after presumed start of comment.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' after presumed start of comment.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
 
             case kComment2_bang_dash:
-                if (c == '-') {
+                if (c.charValue() == '-') {
                     this->changeState(kComment3_in_comment);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%c' after presumed start of comment.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' after presumed start of comment.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
 
             case kComment3_in_comment:
-                if (c == '-') {
+                if (c.charValue() == '-') {
                     this->changeState(kComment4_traildash);
                 } else {
                     /*nothing*/
@@ -1491,7 +1346,7 @@ void VSettingsXMLParser::parseLine() {
                 break;
 
             case kComment4_traildash:
-                if (c == '-') {
+                if (c.charValue() == '-') {
                     this->changeState(kComment5_traildash_dash);
                 } else {
                     this->changeState(kComment3_in_comment);
@@ -1499,9 +1354,9 @@ void VSettingsXMLParser::parseLine() {
                 break;
 
             case kComment5_traildash_dash:
-                if (c == '-') {
+                if (c.charValue() == '-') {
                     // *nothing
-                } else if (c == '>') {
+                } else if (c.charValue() == '>') {
                     this->changeState(kReady);
                 } else {
                     this->changeState(kComment3_in_comment);
@@ -1509,9 +1364,9 @@ void VSettingsXMLParser::parseLine() {
                 break;
 
             case kTag1_open:
-                if (c == '!') {
+                if (c.charValue() == '!') {
                     this->changeState(kComment1_bang);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->changeState(kCloseTag1_open_slash);
                 } else if (c.isAlpha()) {
                     this->changeState(kTag2_in_name);
@@ -1529,14 +1384,14 @@ void VSettingsXMLParser::parseLine() {
                 } else if (c.isWhitespace()) {
                     this->emitOpenTagName();
                     this->changeState(kTag3_post_name);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->emitOpenTagName();
                     this->changeState(kTag8_solo_close_slash);
-                } else if (c == '>') {
+                } else if (c.charValue() == '>') {
                     this->emitOpenTagName();
                     this->changeState(kReady);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in tag name.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in tag name.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
@@ -1544,15 +1399,15 @@ void VSettingsXMLParser::parseLine() {
             case kTag3_post_name:
                 if (c.isWhitespace()) {
                     // nothing
-                } else if (c == '>') {
+                } else if (c.charValue() == '>') {
                     this->changeState(kReady);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->changeState(kTag8_solo_close_slash);
                 } else if (c.isAlpha()) {
                     this->changeState(kTag4_in_attribute_name);
                     this->accumulate(c);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in tag after name.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in tag after name.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
@@ -1560,25 +1415,25 @@ void VSettingsXMLParser::parseLine() {
             case kTag4_in_attribute_name:
                 if (VSettingsXMLParser::isValidAttributeNameChar(c)) {
                     this->accumulate(c);
-                } else if (c == '=') {
+                } else if (c.charValue() == '=') {
                     this->emitAttributeName();
                     this->changeState(kTag5_attribute_equals);
                 } else if (c.isWhitespace()) {
                     this->emitAttributeNameOnly();
                     this->changeState(kTag3_post_name);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->emitAttributeNameOnly();
                     this->changeState(kTag8_solo_close_slash);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in attribute name.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in attribute name.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
 
             case kTag5_attribute_equals:
-                if (c == '\"') {
+                if (c.charValue() == '\"') {
                     this->changeState(kTag6_attribute_quoted);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->emitAttributeValue();
                     this->changeState(kTag8_solo_close_slash);
                 } else if (c.isAlphaNumeric()) {
@@ -1592,7 +1447,7 @@ void VSettingsXMLParser::parseLine() {
                     this->accumulate(c);
                 } else if (c.isWhitespace()) {
                     this->accumulate(c);
-                } else if (c == '\"') {
+                } else if (c.charValue() == '\"') {
                     this->emitAttributeValue();
                     this->changeState(kTag3_post_name);
                 } else {
@@ -1606,24 +1461,24 @@ void VSettingsXMLParser::parseLine() {
                 } else if (c.isWhitespace()) {
                     this->emitAttributeValue();
                     this->changeState(kTag3_post_name);
-                } else if (c == '>') {
+                } else if (c.charValue() == '>') {
                     this->emitAttributeValue();
                     this->changeState(kReady);
-                } else if (c == '/') {
+                } else if (c.charValue() == '/') {
                     this->emitAttributeValue();
                     this->changeState(kTag8_solo_close_slash);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in unquoted attribute value.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in unquoted attribute value.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
 
             case kTag8_solo_close_slash:
-                if (c == '>') {
+                if (c.charValue() == '>') {
                     this->emitEndSoloTag();
                     this->changeState(kReady);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' after solo close tag slash.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' after solo close tag slash.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
@@ -1635,13 +1490,13 @@ void VSettingsXMLParser::parseLine() {
                     this->changeState(kCloseTag2_in_name);
                     this->accumulate(c);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in closing tag.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in closing tag.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
 
             case kCloseTag2_in_name:
-                if (c == '>') {
+                if (c.charValue() == '>') {
                     this->emitCloseTagName();
                     this->changeState(kReady);
                 } else if (c.isWhitespace()) {
@@ -1650,7 +1505,7 @@ void VSettingsXMLParser::parseLine() {
                 } else if (VSettingsXMLParser::isValidTagNameChar(c)) {
                     this->accumulate(c);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in closing tag.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in closing tag.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
@@ -1658,16 +1513,16 @@ void VSettingsXMLParser::parseLine() {
             case kCloseTag3_trailing_whitespace:
                 if (c.isWhitespace()) {
                     // nothing
-                } else if (c == '>') {
+                } else if (c.charValue() == '>') {
                     this->changeState(kReady);
                 } else {
-                    VString s(VSTRING_ARGS("Invalid character '%s' in closing tag.", c.toString().chars()));
+                    VString s(VSTRING_ARGS("Invalid character '%c' in closing tag.", c.charValue()));
                     this->stateError(s);
                 }
                 break;
         }
 
-        if (c == '\t') {
+        if (c.charValue() == '\t') {
             mCurrentColumnNumber += 3;    // already did ++, and we want tabs to be 4 "columns" in terms of syntax errors
         }
     }
@@ -1677,7 +1532,7 @@ void VSettingsXMLParser::resetElement() {
     mElement = VString::EMPTY();
 }
 
-void VSettingsXMLParser::accumulate(const VCodePoint& c) {
+void VSettingsXMLParser::accumulate(const VChar& c) {
     mElement += c;
 }
 
@@ -1729,7 +1584,7 @@ void VSettingsXMLParser::emitAttributeValue() {
 
 void VSettingsXMLParser::emitCloseTagName() {
     if (mCurrentTag->getName() != mElement)
-        this->stateError(VSTRING_FORMAT("Closing tag name '%s' does not balance opening tag '%s'.", mElement.chars(), mCurrentTag->getName().chars()));
+        this->stateError("Closing tag name does not balance opening tag.");
 
     mCurrentTag = mCurrentTag->getParent();
 }
@@ -1739,20 +1594,20 @@ void VSettingsXMLParser::emitEndSoloTag() {
 }
 
 // static
-bool VSettingsXMLParser::isValidTagNameChar(const VCodePoint& c) {
-    int value = c.intValue();
+bool VSettingsXMLParser::isValidTagNameChar(const VChar& c) {
+    char value = c.charValue();
     return ((value > 0x20) && (value < 0x7F) && (value != '<') && (value != '>') && (value != '/') && (value != '='));
 }
 
 // static
-bool VSettingsXMLParser::isValidAttributeNameChar(const VCodePoint& c) {
-    int value = c.intValue();
+bool VSettingsXMLParser::isValidAttributeNameChar(const VChar& c) {
+    char value = c.charValue();
     return ((value > 0x20) && (value < 0x7F) && (value != '<') && (value != '>') && (value != '/') && (value != '='));
 }
 
 // static
-bool VSettingsXMLParser::isValidAttributeValueChar(const VCodePoint& c) {
-    int value = c.intValue();
+bool VSettingsXMLParser::isValidAttributeValueChar(const VChar& c) {
+    char value = c.charValue();
     return ((value > 0x20) && (value < 0x7F) && (value != '<') && (value != '>') && (value != '/') && (value != '='));
 }
 

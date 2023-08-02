@@ -1,8 +1,7 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
-This file is part of the Code Vault version 4.1
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
+This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 #ifndef vsettings_h
@@ -11,10 +10,8 @@ License: MIT. See LICENSE.md in the Vault top level directory.
 /** @file */
 
 #include "vstring.h"
-#include "vgeometry.h"
-#include "vcolor.h"
+#include "vbento.h"
 
-class VBentoNode;
 class VTextIOStream;
 
 /**
@@ -50,13 +47,8 @@ or a CDATA node.
 */
 class VSettingsNode {
     public:
-    
-        // constants for addInstantValue:
-        static const int UTC_OFFSET = 0;
-        static const int UTC_STRING = 1;
-        static const int LOCAL_STRING = 2;
 
-        VSettingsNode(VSettingsTag* parent, const VString& name, bool preferCDATA=true);
+        VSettingsNode(VSettingsTag* parent, const VString& name);
         VSettingsNode(const VSettingsNode& other);
         virtual ~VSettingsNode() {}
 
@@ -110,12 +102,6 @@ class VSettingsNode {
         virtual VDuration getDuration(const VString& path, const VDuration& defaultValue) const;
         virtual VDuration getDuration(const VString& path) const;
         virtual VDuration getDurationValue() const = 0;
-        virtual VDate getDate(const VString& path, const VDate& defaultValue) const;
-        virtual VDate getDate(const VString& path) const;
-        virtual VDate getDateValue() const = 0;
-        virtual VInstant getInstant(const VString& path, const VInstant& defaultValue) const;
-        virtual VInstant getInstant(const VString& path) const;
-        virtual VInstant getInstantValue() const = 0;
         virtual bool nodeExists(const VString& path) const;
 
         virtual void addIntValue(const VString& path, int value);
@@ -128,8 +114,6 @@ class VSettingsNode {
         virtual void addRectValue(const VString& path, const VRect& value);
         virtual void addPolygonValue(const VString& path, const VPolygon& value);
         virtual void addColorValue(const VString& path, const VColor& value);
-        virtual void addInstantValue(const VString& path, const VInstant& value, int format);
-        virtual void addDateValue(const VString& path, const VDate& value);
         virtual void addDurationValue(const VString& path, const VDuration& value);
         virtual void addItem(const VString& path);
         virtual void setIntValue(const VString& path, int value);
@@ -149,7 +133,6 @@ class VSettingsNode {
         virtual void addValue(const VString& value);
 
         virtual void addChildNode(VSettingsNode* node);
-        virtual VSettingsTag* addNewChildTag(VSettingsTag* node);
 
         VSettingsTag* getParent();
 
@@ -167,7 +150,6 @@ class VSettingsNode {
 
         VSettingsTag*   mParent;
         VString         mName;
-        bool            mPreferCDATA;   ///< If true, leaf attributes will be added as tags with CDATA rather than attribute/value.
 };
 
 /**
@@ -204,8 +186,6 @@ class VSettings : public VSettingsNode {
         virtual VPolygon getPolygonValue() const;
         virtual VColor getColorValue() const;
         virtual VDuration getDurationValue() const;
-        virtual VDate getDateValue() const;
-        virtual VInstant getInstantValue() const;
 
         virtual void addChildNode(VSettingsNode* node);
 
@@ -258,8 +238,6 @@ class VSettingsTag : public VSettingsNode {
         virtual VPolygon getPolygonValue() const;
         virtual VColor getColorValue() const;
         virtual VDuration getDurationValue() const;
-        virtual VDate getDateValue() const;
-        virtual VInstant getInstantValue() const;
 
         virtual void setLiteral(const VString& value);
 
@@ -304,8 +282,6 @@ class VSettingsAttribute : public VSettingsNode {
         virtual VPolygon getPolygonValue() const;
         virtual VColor getColorValue() const;
         virtual VDuration getDurationValue() const;
-        virtual VDate getDateValue() const;
-        virtual VInstant getInstantValue() const;
 
         virtual void setLiteral(const VString& value);
 
@@ -343,8 +319,6 @@ class VSettingsCDATA : public VSettingsNode {
         virtual VPolygon getPolygonValue() const;
         virtual VColor getColorValue() const;
         virtual VDuration getDurationValue() const;
-        virtual VDate getDateValue() const;
-        virtual VInstant getInstantValue() const;
 
         virtual void setLiteral(const VString& value);
 
@@ -388,7 +362,7 @@ class VSettingsXMLParser {
 
         void parseLine();
         void resetElement();
-        void accumulate(const VCodePoint& c);
+        void accumulate(const VChar& c);
         void changeState(ParserState newState);
         void stateError(const VString& errorMessage);
 
@@ -410,9 +384,9 @@ class VSettingsXMLParser {
         VSettingsTag*           mCurrentTag;
         VString                 mPendingAttributeName;
 
-        static bool isValidTagNameChar(const VCodePoint& c);
-        static bool isValidAttributeNameChar(const VCodePoint& c);
-        static bool isValidAttributeValueChar(const VCodePoint& c);
+        static bool isValidTagNameChar(const VChar& c);
+        static bool isValidAttributeNameChar(const VChar& c);
+        static bool isValidAttributeValueChar(const VChar& c);
 
     private:
 

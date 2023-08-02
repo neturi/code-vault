@@ -1,8 +1,7 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
 This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 #ifndef vsingleton_h
@@ -80,10 +79,10 @@ instance. These are typically design bugs that need to be re-thought.
 </ul>
 <p>
 @see VShutdownRegistry
-@see IVShutdownHandler
+@see MShutdownHandler
 */
 template <class T>
-class VSingleton : public IVShutdownHandler {
+class VSingleton : public MShutdownHandler {
     public:
 
         /** Specifies whether the VSingleton can be deleted. */
@@ -106,7 +105,7 @@ class VSingleton : public IVShutdownHandler {
                    ThreadSafetyPolicy threadSafetyPolicy,
                    ShutdownPolicy shutdownPolicy,
                    ResurrectionPolicy resurrectionPolicy = kDontAllowResurrection)
-            : IVShutdownHandler(holderDeletionPolicy == kDeleteHolderAtShutdown)
+            : MShutdownHandler(holderDeletionPolicy == kDeleteHolderAtShutdown)
             , mThreadSafe(threadSafetyPolicy == kThreadSafeAccess)
             , mWantShutdown(shutdownPolicy == kRegisterForShutdown)
             , mAllowResurrection(resurrectionPolicy == kAllowResurrection)
@@ -152,7 +151,7 @@ class VSingleton : public IVShutdownHandler {
     protected:
 
         /**
-        Implementation of IVShutdownHandler interface.
+        Implementation of MShutdownHandler interface.
         To shut down the singleton means to delete the instance.
         */
         virtual void _shutdown() {

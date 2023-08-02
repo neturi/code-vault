@@ -1,16 +1,12 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
-This file is part of the Code Vault version 4.1
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
+This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 /** @file */
 
 #include "vassert.h"
-
-#include "vlogger.h"
-#include "vexception.h"
 
 static void _failedAssert(const VString& failMessage, const char* file, int line) {
     VLOGGER_LEVEL_FILELINE(VLoggerLevel::ERROR, failMessage, file, line);
@@ -199,11 +195,6 @@ void VAssert::failedAssertEqual(const char* a, const VString& b, const char* exp
 }
 
 // static
-void VAssert::failedAssertEqual(const VCodePoint& a, const VCodePoint& b, const char* expressionA, const char* expressionB, const char* file, int line) {
-    _failedAssertEqual(a, b, expressionA, expressionB, file, line);
-}
-
-// static
 void VAssert::failedAssertEqual(const VChar& a, const VChar& b, const char* expressionA, const char* expressionB, const char* file, int line) {
     _failedAssertEqual(a, b, expressionA, expressionB, file, line);
 }
@@ -304,11 +295,6 @@ void VAssert::failedAssertNotEqual(VDouble val, const char* expressionA, const c
 
 // static
 void VAssert::failedAssertNotEqual(const VString& val, const char* expressionA, const char* expressionB, const char* file, int line) {
-    _failedAssertNotEqual(val, expressionA, expressionB, file, line);
-}
-
-// static
-void VAssert::failedAssertNotEqual(const VCodePoint& val, const char* expressionA, const char* expressionB, const char* file, int line) {
     _failedAssertNotEqual(val, expressionA, expressionB, file, line);
 }
 
@@ -457,11 +443,6 @@ void VAssert::failedLessGreaterComparison(bool comparingLessThan, bool comparing
 }
 
 // static
-void VAssert::failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VCodePoint& a, const VCodePoint& b, const char* expressionA, const char* expressionB, const char* file, int line) {
-    _failedLessOrGreaterThan(comparingLessThan, comparingOrEqualTo, a, b, expressionA, expressionB, file, line);
-}
-
-// static
 void VAssert::failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VChar& a, const VChar& b, const char* expressionA, const char* expressionB, const char* file, int line) {
     _failedLessOrGreaterThan(comparingLessThan, comparingOrEqualTo, a, b, expressionA, expressionB, file, line);
 }
@@ -547,11 +528,6 @@ void VAssert::failedRangeCheck(VDouble val, VDouble minVal, VDouble maxVal, cons
 
 // static
 void VAssert::failedRangeCheck(const VString& val, const VString& minVal, const VString& maxVal, const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line) {
-    _failedAssertRangeCheck(val, minVal, maxVal, valExpression, minValExpression, maxValExpression, file, line);
-}
-
-// static
-void VAssert::failedRangeCheck(const VCodePoint& val, const VCodePoint& minVal, const VCodePoint& maxVal, const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line) {
     _failedAssertRangeCheck(val, minVal, maxVal, valExpression, minValExpression, maxValExpression, file, line);
 }
 

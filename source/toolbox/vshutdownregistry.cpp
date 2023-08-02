@@ -1,13 +1,11 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
-This file is part of the Code Vault version 4.1
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
+This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 #include "vshutdownregistry.h"
-
-#include "vmutex.h"
+#include "vlogger.h"
 #include "vmutexlocker.h"
 
 VShutdownRegistry* VShutdownRegistry::gInstance = NULL;
@@ -40,7 +38,7 @@ void VShutdownRegistry::shutdown() {
     }
 }
 
-void VShutdownRegistry::registerHandler(IVShutdownHandler* handler) {
+void VShutdownRegistry::registerHandler(MShutdownHandler* handler) {
     VMutexLocker locker(_mutexInstance(), "VShutdownRegistry::registerHandler()");
 
     mHandlers.push_back(handler);
@@ -64,7 +62,10 @@ VShutdownRegistry::~VShutdownRegistry() {
     }
 
     for (ShutdownHandlerList::iterator i = mHandlers.begin(); i != mHandlers.end(); ++i) {
-        IVShutdownHandler*    handler = (*i);
+        MShutdownHandler*    handler = (*i);
+
+        if (!CheckNULLAndLog(handler))
+            continue;
 
         bool deleteHandler = handler->mDeleteAfterShutdown; // save first; _shutdown() could delete handler
         handler->_shutdown();

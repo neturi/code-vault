@@ -1,8 +1,7 @@
 /*
-Copyright c1997-2014 Trygve Isaacson. All rights reserved.
-This file is part of the Code Vault version 4.1
+Copyright c1997-2011 Trygve Isaacson. All rights reserved.
+This file is part of the Code Vault version 3.3
 http://www.bombaydigital.com/
-License: MIT. See LICENSE.md in the Vault top level directory.
 */
 
 #ifndef vassert_h
@@ -13,7 +12,6 @@ License: MIT. See LICENSE.md in the Vault top level directory.
 #include "vtypes.h"
 
 #include "vstring.h"
-#include "vcodepoint.h"
 #include "vchar.h"
 #include "vinstant.h"
 #include "vcolor.h"
@@ -152,7 +150,6 @@ class VAssert {
         static void failedAssertEqual(const VString& a, const VString& b,       const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertEqual(const VString& a, const char* b,          const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertEqual(const char* a, const VString& b,          const char* expressionA, const char* expressionB, const char* file, int line);
-        static void failedAssertEqual(const VCodePoint& a, const VCodePoint& b, const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertEqual(const VChar& a, const VChar& b,           const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertEqual(const VChar& a, char b,                   const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertEqual(const VDuration& a, const VDuration& b,   const char* expressionA, const char* expressionB, const char* file, int line);
@@ -181,7 +178,6 @@ class VAssert {
 
         static void failedAssertNotEqual(VDouble val,           const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertNotEqual(const VString& val,    const char* expressionA, const char* expressionB, const char* file, int line);
-        static void failedAssertNotEqual(const VCodePoint& val, const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertNotEqual(const VChar& val,      const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertNotEqual(const VDuration& val,  const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedAssertNotEqual(const VInstant& val,   const char* expressionA, const char* expressionB, const char* file, int line);
@@ -218,7 +214,6 @@ class VAssert {
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VString& a, const VString& b,        const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VString& a, const char* b,           const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const char* a, const VString& b,           const char* expressionA, const char* expressionB, const char* file, int line);
-        static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VCodePoint& a, const VCodePoint& b,  const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VChar& a, const VChar& b,            const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VChar& a, char b,                    const char* expressionA, const char* expressionB, const char* file, int line);
         static void failedLessGreaterComparison(bool comparingLessThan, bool comparingOrEqualTo, const VDuration& a, const VDuration& b,    const char* expressionA, const char* expressionB, const char* file, int line);
@@ -245,7 +240,6 @@ class VAssert {
 
         static void failedRangeCheck(VDouble val, VDouble minVal, VDouble maxVal,                               const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);
         static void failedRangeCheck(const VString& val, const VString& minVal, const VString& maxVal,          const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);
-        static void failedRangeCheck(const VCodePoint& val, const VCodePoint& minVal, const VCodePoint& maxVal, const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);
         static void failedRangeCheck(const VChar& val, const VChar& minVal, const VChar& maxVal,                const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);
         static void failedRangeCheck(const VDuration& val, const VDuration& minVal, const VDuration& maxVal,    const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);
         static void failedRangeCheck(const VInstant& val, const VInstant& minVal, const VInstant& maxVal,       const char* valExpression, const char* minValExpression, const char* maxValExpression, const char* file, int line);

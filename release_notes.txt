@@ -4,6 +4,7 @@ CODE VAULT RELEASE NOTES
 Anil Babu Neturi, December 2021 - February 2022
 VEventProducer(Unix flavored platforms) to Produce and capture events and the supporting classes to capture the 
 session info - VCommSessionInfo
+Stack Crawler for Unix flavored platforms to caputure dumps using boost backtrace.
 
 Laxmana Mohan Prabhu, August 2017
 VWSAEventProducer to Produce and capture events and the supporting classes to capture the session info - VCommSessionInfo
